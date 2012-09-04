@@ -17,7 +17,7 @@ class RRYScale(mscale.ScaleBase):
 
     # The scale class must have a member ``name`` that defines the
     # string used to select the scale.  For example,
-    # ``gca().set_yscale("RRy")`` would be used to select this
+    # ``gca().set_yscale("rry")`` would be used to select this
     # scale.
     name = 'rry'
 
@@ -30,7 +30,7 @@ class RRYScale(mscale.ScaleBase):
         thresh: The degree above which to crop the data.
         """
         mscale.ScaleBase.__init__(self)
-        thresh = kwargs.pop("thresh", 1.0)
+        thresh = kwargs.pop("thresh", 0.01)
         self.thresh = thresh
 
     def get_transform(self):
@@ -51,8 +51,10 @@ class RRYScale(mscale.ScaleBase):
         formatters is rather outside the scope of this example, but
         there are many helpful examples in ``ticker.py``.
         """
-
-        axis.set_major_locator(mscale.FixedLocator(mscale.np.array([0.1, 1,5,10,20,30,40,50,60,70,75,80,85,90,92,94,96,98,99,99.5,99.8])))
+        axis.set_major_locator(
+            mscale.FixedLocator(
+                mscale.np.array([0.1,1,5,10,20,30,40,50,60,70,75,80,
+                        85,90,92,94,96,98,99,99.5,99.8])))
 
     def limit_range_for_scale(self, vmin, vmax, minpos):
         """
@@ -64,7 +66,7 @@ class RRYScale(mscale.ScaleBase):
         manually, determined automatically or changed through panning
         and zooming.
         """
-        return max(vmin, 1), min(vmax, 100)
+        return max(vmin, self.thresh), min(vmax, 99.99)
 
     class RRYTransform(mtransforms.Transform):
         # There are two value members that must be defined.
@@ -97,9 +99,9 @@ class RRYScale(mscale.ScaleBase):
             """
             masked = mscale.ma.masked_where((a < self.thresh), a)
             if masked.mask.any():
-                return mscale.ma.log10(mscale.ma.log10(100/masked))
+                return mscale.ma.log10(mscale.ma.log10(100*masked**-1))
             else:
-                return mscale.np.log10(mscale.np.log10(100/a))
+                return mscale.np.log10(mscale.np.log10(100*a**-1))
 
         def inverted(self):
             """
@@ -118,7 +120,7 @@ class RRYScale(mscale.ScaleBase):
             self.thresh = thresh
 
         def transform(self, a):
-            return 100/(10**(10**a))
+                return 10**(2-(10**(a)))
 
         def inverted(self):
             return RRYScale.RRYTransform(self.thresh)
