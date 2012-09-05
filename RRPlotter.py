@@ -13,6 +13,8 @@ from numpy import exp, log10, linspace
 from matplotlib import pyplot
 from matplotlib import scale as mscale
 from RRYScale import RRYScale
+from tempfile import mkstemp
+from os import close
 
 def RosinRammler(x,k,n):
     return 100*exp(-(x/k)**n)
@@ -25,11 +27,10 @@ def FitRR(x,y):
 def Pass2Retain(PP):
     return [PP[0] - x for x in PP]
 
-if __name__ == '__main__':
-    x =  [0.08, 0.50, 1.25, 2, 4, 6.3, 8, 12.5, 16, 40]
-    y = [95.61, 87.71, 82.45, 79.78, 73.28, 66.98, 63.21, 55.4, 49.91, 23.95]
+def PlotRR(x,y):
+    pyplot.clf()
     k, n = FitRR(x,y)
-    s ='k = %.2f, n = %.2f' % (k, n)
+    f, fn = mkstemp(suffix='.png')
 
     rrx = linspace(min(x),max(x),num=50,endpoint=True)
     rry = RosinRammler(rrx,k,n)
@@ -45,9 +46,17 @@ if __name__ == '__main__':
     pyplot.gca().set_xscale('log')
     pyplot.gca().invert_yaxis()
 
+    s ='k = %.2f, n = %.2f' % (k, n)
     pyplot.text(10**-1.7,9,s)
-    pyplot.xlabel('Size [mm]')
+    pyplot.xlabel('Screen Size [mm]')
     pyplot.ylabel('Retained on Screen [%]')
     pyplot.title('Rosin-Rammler Plot')
+    pyplot.savefig(fn,dpi=300,format='png',bbox_inches='tight',pad_inches=0.1)
+    close(f)
+    return k, n, fn
 
-    pyplot.show()
+if __name__ == '__main__':
+    x =  [0.08, 0.50, 1.25, 2, 4, 6.3, 8, 12.5, 16, 40]
+    y = [95.61, 87.71, 82.45, 79.78, 73.28, 66.98, 63.21, 55.4, 49.91, 23.95]
+    k, n, fn = PlotRR(x,y)
+    print k, n, fn
